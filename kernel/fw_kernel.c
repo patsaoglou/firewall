@@ -1,16 +1,16 @@
-#include "fw_proc_if.h"
+#include "fw_kernel.h"
 
 MODULE_AUTHOR("Patsaoglou Pantelis");
-MODULE_DESCRIPTION("My starter module for kernel dev");
+MODULE_DESCRIPTION("Kernel module for netfilter hooks inmplemation and procfs pseudofile registration");
 MODULE_LICENSE("Dual MIT/GPL");
 
 static fw_proc_if_st proc_handle;
 
-static int __init starter_init(void)
+static int __init fw_kernel_init(void)
 {
-	printk(KERN_INFO "%s: Starter module testing fw proc if source\n", KBUILD_MODNAME);
+	printk(KERN_INFO "%s: Starting Firewall kernel\n", KBUILD_MODNAME);
 	
-	if (init_fw_proc_if(&proc_handle) == FW_PROC_IF_SUCCESS)
+	if (init_fw_proc_if(&proc_handle, NULL) == FW_PROC_IF_SUCCESS)
 	{
 		printk(KERN_INFO "%s: Successfull init_fw_proc_if \n", KBUILD_MODNAME);
 		return 0;
@@ -21,11 +21,11 @@ static int __init starter_init(void)
 	}
 }
 
-static void __exit starter_exit(void)
+static void __exit fw_kernel_exit(void)
 {
 	deinit_fw_proc_if(&proc_handle);
 	printk(KERN_INFO "%s: Starter module exit\n", KBUILD_MODNAME);
 }
 
-module_init(starter_init);
-module_exit(starter_exit);
+module_init(fw_kernel_init);
+module_exit(fw_kernel_exit);

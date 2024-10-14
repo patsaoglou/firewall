@@ -3,19 +3,20 @@
 MODULE_LICENSE("Dual MIT/GPL");
 
 // struct for proc operation callbacks
-static const struct file_operations mng_cb = {
-    .read = mng_read_cb,
+struct file_operations mng_cb = {
     .write = mng_write_cb
 };
 
-static const struct file_operations log_cb = {
-    .read = log_read_cb,
-    .write = log_write_cb
+struct file_operations log_cb = {
+    .read = log_read_cb
 };
 
-int init_fw_proc_if(fw_proc_if_st *fw_proc_if_handle)
+int init_fw_proc_if(fw_proc_if_st *fw_proc_if_handle, fw_netfilter_if *fw_netfilter_handle_p)
 {
     int state;
+
+    //  register fw_netfilter_handle to use netfilter interface
+    fw_proc_if_handle->fw_netfilter_handle = fw_netfilter_handle_p;
 
     state = register_fw_proc_if_dir(fw_proc_if_handle);
     if (state != FW_PROC_IF_SUCCESS)
@@ -44,9 +45,9 @@ int register_fw_proc_if_dir(fw_proc_if_st *fw_proc_if_handle)
 
     if (fw_proc_if_handle->fw_proc_if_dentry == NULL)
     {
-        printk(KERN_INFO "Error creating a directory entry into proc.");
+        printk(KERN_INFO "%s: Error creating a directory entry into proc", KBUILD_MODNAME);
 
-        return FW_PROC_IF_FAIL;
+        return handle_fw_proc_if_fail(fw_proc_if_handle);
     }
 
     return FW_PROC_IF_SUCCESS;
@@ -60,10 +61,10 @@ int register_fw_mng(fw_proc_if_st *fw_proc_if_handle)
     
     if (fw_proc_if_handle->fw_proc_if_mng == NULL)
     {
-        printk(KERN_INFO "Error creating proc file entry mng.");
+        printk(KERN_INFO "%s: Error creating proc file entry mng", KBUILD_MODNAME);
         handle_fw_proc_if_fail(fw_proc_if_handle);
     
-        return FW_PROC_IF_FAIL;
+        return handle_fw_proc_if_fail(fw_proc_if_handle);
     }
     return FW_PROC_IF_SUCCESS;
 
@@ -76,11 +77,9 @@ int register_fw_log(fw_proc_if_st *fw_proc_if_handle)
 
     if (fw_proc_if_handle->fw_proc_if_log == NULL)
     {
-        printk(KERN_INFO "Error creating proc file entry log.");
+        printk(KERN_INFO "%s: Error creating proc file entry log", KBUILD_MODNAME);
 
-        handle_fw_proc_if_fail(fw_proc_if_handle);
-
-        return FW_PROC_IF_FAIL;
+        return handle_fw_proc_if_fail(fw_proc_if_handle);
     }   
 
     return FW_PROC_IF_SUCCESS;
@@ -89,13 +88,13 @@ int register_fw_log(fw_proc_if_st *fw_proc_if_handle)
 // wrapper for fw_proc_if de-initialization
 void deinit_fw_proc_if(fw_proc_if_st *fw_proc_if_handle)
 {
-    printk(KERN_INFO "Deinitializing proc entries.");
+    printk(KERN_INFO "%s: Deinitializing proc entries", KBUILD_MODNAME);
 
     handle_fw_proc_if_fail(fw_proc_if_handle);
 }
 
 
-void handle_fw_proc_if_fail(fw_proc_if_st *fw_proc_if_handle)
+int handle_fw_proc_if_fail(fw_proc_if_st *fw_proc_if_handle)
 {   
     // remove proc entry if there is a fw_proc_if fail
     if (fw_proc_if_handle->fw_proc_if_mng)
@@ -113,24 +112,28 @@ void handle_fw_proc_if_fail(fw_proc_if_st *fw_proc_if_handle)
         proc_remove(fw_proc_if_handle->fw_proc_if_dentry);
     }
 
+    return FW_PROC_IF_FAIL;
 }
 
-ssize_t mng_read_cb(struct file *file, char __user *ubuf,size_t count, loff_t *ppos)
-{
-    return 1;
+ssize_t mng_write_cb(struct file *file, const char __user *ubuf, size_t count, loff_t *ppos)
+{   
+    char test_buff[32];
+
+    memset(test_buff, 0 , 32);
+
+
+    if (copy_from_user(test_buff, ubuf, count))
+    {
+        printk(KERN_INFO "%s: mng_read_cb was envoked and failed", KBUILD_MODNAME);
+        return -1;
+    }
+    
+    printk(KERN_INFO "%s: mng_read_cb was good. Got: %s", KBUILD_MODNAME, test_buff);
+    
+    return count;
 }
 
-ssize_t mng_write_cb(struct file *file, const char __user *ubuf,size_t count, loff_t *ppos)
-{
-    return 1;
-}
-
-ssize_t log_read_cb(struct file *file, char __user *ubuf,size_t count, loff_t *ppos)
-{
-    return 1;
-}
-
-ssize_t log_write_cb(struct file *file, const char __user *ubuf,size_t count, loff_t *ppos)
+ssize_t log_read_cb(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
 {
     return 1;
 }
