@@ -1,4 +1,6 @@
 #include <linux/netfilter.h>
+#include <linux/netfilter_ipv4.h>
+#include <linux/ip.h>
 
 #define FW_NETFILTER_LOG_BUFF_SIZE 128
 
@@ -16,9 +18,26 @@ typedef enum
     FW_NETFILTER_IF_FAIL
 }fw_netfilter_if_status;
 
+typedef enum
+{
+    IP_TABLE_ENTRY_FOUND,
+    IP_TABLE_ENTRY_NOT_FOUND,
+    IP_TABLE_ENTRY_ADDED,
+    IP_TABLE_ENTRY_REMOVED,
+    IP_TABLE_FAIL
+}fw_netfilter_if_ip_table_st;
 
 fw_netfilter_if_status init_fw_netfilter_if(fw_netfilter_if *fw_netfilter_if_handle);
 void deinit_fw_netfilter_if(fw_netfilter_if *fw_netfilter_if_handle);
 
 unsigned int fw_netfilter_hook_cb(void *priv,struct sk_buff *skb, const struct nf_hook_state *state);
+
+// fw_netfilter_if_ip_table_st lookup_ipv4_entry(__be32 *ipv4_addr);
+
+// fw_netfilter_if_ip_table_st add_ipv4_entry(__be32 *ipv4_addr);
+// fw_netfilter_if_ip_table_st remove_ipv4_entry(__be32 *ipv4_addr);
+// fw_netfilter_if_ip_table_st add_ipv4_entries(__be32 ipv4_addr[]);
+// fw_netfilter_if_ip_table_st remove_ipv4_entries(__be32 ipv4_addr[]);
+
+
 

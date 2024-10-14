@@ -11,7 +11,7 @@ struct file_operations log_cb = {
     .read = log_read_cb
 };
 
-int init_fw_proc_if(fw_proc_if_st *fw_proc_if_handle, fw_netfilter_if *fw_netfilter_handle_p)
+fw_proc_if_status init_fw_proc_if(fw_proc_if_st *fw_proc_if_handle, fw_netfilter_if *fw_netfilter_handle_p)
 {
     int state;
 
@@ -39,7 +39,7 @@ int init_fw_proc_if(fw_proc_if_st *fw_proc_if_handle, fw_netfilter_if *fw_netfil
     return FW_PROC_IF_SUCCESS;
 }
 
-int register_fw_proc_if_dir(fw_proc_if_st *fw_proc_if_handle)
+fw_proc_if_status register_fw_proc_if_dir(fw_proc_if_st *fw_proc_if_handle)
 {
     fw_proc_if_handle->fw_proc_if_dentry = proc_mkdir(FW_PROC_DENTRY_NAME, NULL);
 
@@ -54,7 +54,7 @@ int register_fw_proc_if_dir(fw_proc_if_st *fw_proc_if_handle)
 }
 
 
-int register_fw_mng(fw_proc_if_st *fw_proc_if_handle)
+fw_proc_if_status register_fw_mng(fw_proc_if_st *fw_proc_if_handle)
 {
     // registering mng proc file with write permitions only 
     fw_proc_if_handle->fw_proc_if_mng = proc_create(FW_PROC_MNG_FILENAME, 0222, fw_proc_if_handle->fw_proc_if_dentry, &mng_cb);
@@ -70,7 +70,7 @@ int register_fw_mng(fw_proc_if_st *fw_proc_if_handle)
 
 }
 
-int register_fw_log(fw_proc_if_st *fw_proc_if_handle)
+fw_proc_if_status register_fw_log(fw_proc_if_st *fw_proc_if_handle)
 {
     // registering log proc file with read permitions only  
     fw_proc_if_handle->fw_proc_if_log = proc_create(FW_PROC_LOG_FILENAME, 0444, fw_proc_if_handle->fw_proc_if_dentry, &log_cb);
@@ -94,7 +94,7 @@ void deinit_fw_proc_if(fw_proc_if_st *fw_proc_if_handle)
 }
 
 
-int handle_fw_proc_if_fail(fw_proc_if_st *fw_proc_if_handle)
+fw_proc_if_status handle_fw_proc_if_fail(fw_proc_if_st *fw_proc_if_handle)
 {   
     // remove proc entry if there is a fw_proc_if fail
     if (fw_proc_if_handle->fw_proc_if_mng)
