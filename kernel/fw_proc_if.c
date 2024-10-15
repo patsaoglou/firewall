@@ -135,5 +135,28 @@ ssize_t mng_write_cb(struct file *file, const char __user *ubuf, size_t count, l
 
 ssize_t log_read_cb(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
 {
-    return 1;
+    int bytes_not_copied;
+    char* s = "hello";
+    int len = strlen(s);
+
+    if (*ppos >= len )
+    {
+        return 0;
+    }
+
+    if (count > len - *ppos)
+    {
+        count = len - *ppos;
+    }
+
+    bytes_not_copied = copy_to_user(ubuf, s + *ppos, count);
+    
+    if (bytes_not_copied)
+    {
+        return -EFAULT;
+    }
+
+    *ppos +=count;
+
+    return count;
 }

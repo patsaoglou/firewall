@@ -1,8 +1,19 @@
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
 #include <linux/ip.h>
+#include <linux/hashtable.h>
 
 #define FW_NETFILTER_LOG_BUFF_SIZE 128
+#define HASHTABLE_BUCKETS 10 
+
+typedef struct 
+{   
+    // storing ip as 32bit key
+    __be32 ipv4_entry;
+
+    struct hlist_node hash_node;
+}ip_hashtable_entry;
+
 
 typedef struct 
 {
@@ -32,10 +43,10 @@ void deinit_fw_netfilter_if(fw_netfilter_if *fw_netfilter_if_handle);
 
 unsigned int fw_netfilter_hook_cb(void *priv,struct sk_buff *skb, const struct nf_hook_state *state);
 
-// fw_netfilter_if_ip_table_st lookup_ipv4_entry(__be32 *ipv4_addr);
+fw_netfilter_if_ip_table_st lookup_ipv4_entry(__be32 ipv4_addr);
 
-// fw_netfilter_if_ip_table_st add_ipv4_entry(__be32 *ipv4_addr);
-// fw_netfilter_if_ip_table_st remove_ipv4_entry(__be32 *ipv4_addr);
+fw_netfilter_if_ip_table_st add_ipv4_entry(__be32 ipv4_addr);
+fw_netfilter_if_ip_table_st remove_ipv4_entry(__be32 ipv4_addr);
 // fw_netfilter_if_ip_table_st add_ipv4_entries(__be32 ipv4_addr[]);
 // fw_netfilter_if_ip_table_st remove_ipv4_entries(__be32 ipv4_addr[]);
 
