@@ -139,6 +139,8 @@ ssize_t log_read_cb(struct file *file, char __user *ubuf, size_t count, loff_t *
     int bytes_not_copied;
     int len;
     
+    printk(KERN_INFO "%s: read proc", KBUILD_MODNAME);
+
     spin_lock_irqsave(&log_spinlock, irq_flags);
     
     len = strlen(fw_netfilter_if_handle_gb->log_dump);
