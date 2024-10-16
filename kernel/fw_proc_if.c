@@ -135,12 +135,17 @@ ssize_t mng_write_cb(struct file *file, const char __user *ubuf, size_t count, l
 
 ssize_t log_read_cb(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
 {
+    long irq_flags;
     int bytes_not_copied;
-    char* s = "hello";
-    int len = strlen(s);
+    int len;
+    
+    spin_lock_irqsave(&log_spinlock, irq_flags);
+    
+    len = strlen(fw_netfilter_if_handle_gb->log_dump);
 
     if (*ppos >= len )
     {
+        spin_unlock_irqrestore(&log_spinlock, irq_flags);
         return 0;
     }
 
@@ -148,14 +153,18 @@ ssize_t log_read_cb(struct file *file, char __user *ubuf, size_t count, loff_t *
     {
         count = len - *ppos;
     }
+            
+    bytes_not_copied = copy_to_user(ubuf, fw_netfilter_if_handle_gb->log_dump + *ppos, count);
 
-    bytes_not_copied = copy_to_user(ubuf, s + *ppos, count);
-    
     if (bytes_not_copied)
     {
+        spin_unlock_irqrestore(&log_spinlock, irq_flags);
         return -EFAULT;
     }
 
+    memset(fw_netfilter_if_handle_gb->log_dump, 0, FW_NETFILTER_LOG_BUFF_SIZE);
+    spin_unlock_irqrestore(&log_spinlock, irq_flags);
+    
     *ppos +=count;
 
     return count;

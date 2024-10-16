@@ -2,6 +2,7 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/ip.h>
 #include <linux/hashtable.h>
+#include <linux/time.h>
 
 #define FW_NETFILTER_LOG_BUFF_SIZE 128
 #define HASHTABLE_BUCKETS 10 
@@ -38,6 +39,9 @@ typedef enum
     IP_TABLE_FAIL
 }fw_netfilter_if_ip_table_st;
 
+extern spinlock_t log_spinlock; 
+extern fw_netfilter_if *fw_netfilter_if_handle_gb;
+
 fw_netfilter_if_status init_fw_netfilter_if(fw_netfilter_if *fw_netfilter_if_handle);
 void deinit_fw_netfilter_if(fw_netfilter_if *fw_netfilter_if_handle);
 
@@ -47,6 +51,11 @@ fw_netfilter_if_ip_table_st lookup_ipv4_entry(__be32 ipv4_addr);
 
 fw_netfilter_if_ip_table_st add_ipv4_entry(__be32 ipv4_addr);
 fw_netfilter_if_ip_table_st remove_ipv4_entry(__be32 ipv4_addr);
+
+
+void add_log_enty_to_log_buff(struct iphdr *ip_header);
+char *get_protocal_str(__u8 protocol);
+
 // fw_netfilter_if_ip_table_st add_ipv4_entries(__be32 ipv4_addr[]);
 // fw_netfilter_if_ip_table_st remove_ipv4_entries(__be32 ipv4_addr[]);
 
