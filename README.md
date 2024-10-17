@@ -12,3 +12,4 @@
 - NetFilterExample: [https://infosecwriteups.com/linux-kernel-communication-part-1-netfilter-hooks-15c07a5a5c4e](https://blogs.oracle.com/linux/post/introduction-to-netfilter)
 - Netfilter walkthrough: https://people.computing.clemson.edu/~westall/853/notes/netfilter.pdf
 - Deep dive in netfilter API applications : https://phrack.org/issues/61/13.html
+- Netlink examples: https://github.com/mwarning/netlink-examples

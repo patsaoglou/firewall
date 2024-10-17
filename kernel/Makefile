@@ -1,7 +1,7 @@
 # Makefile to build starter module
 
 obj-m += fw.o
-fw-objs := fw_proc_if.o fw_kernel.o fw_netfilter_if.o
+fw-objs := fw_proc_if.o fw_kernel.o fw_netfilter_if.o fw_netlink_logger_if.o 
 
 
 all:
