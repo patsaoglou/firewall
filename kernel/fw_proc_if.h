@@ -1,3 +1,6 @@
+#ifndef _FW_PROC_IF_H
+#define _FW_PROC_IF_H
+
 #include <linux/proc_fs.h>
 #include <linux/init.h>
 #include <linux/module.h>
@@ -5,7 +8,6 @@
 #include <linux/uaccess.h>
 
 #include "fw_netfilter_if.h"
-
 
 #define FW_PROC_DENTRY_NAME     "my_fw"
 #define FW_PROC_MNG_FILENAME    "mng"
@@ -29,13 +31,11 @@ typedef enum
 
 fw_proc_if_status init_fw_proc_if(fw_proc_if_st *fw_proc_if_handle, fw_netfilter_if *fw_netfilter_handle_p);
 void deinit_fw_proc_if(fw_proc_if_st *fw_proc_if_handle);
-
-fw_proc_if_status register_fw_proc_if_dir(fw_proc_if_st *fw_proc_if_handle);
-
-fw_proc_if_status register_fw_mng(fw_proc_if_st *fw_proc_if_handle);
-
-ssize_t mng_write_cb(struct file *file, const char __user *ubuf, size_t count, loff_t *ppos);
-
 fw_proc_if_status handle_fw_proc_if_fail(fw_proc_if_st *fw_proc_if_handle);
 
+fw_proc_if_status register_fw_proc_if_dir(fw_proc_if_st *fw_proc_if_handle);
+fw_proc_if_status register_fw_mng(fw_proc_if_st *fw_proc_if_handle);
+ssize_t mng_write_cb(struct file *file, const char __user *ubuf, size_t count, loff_t *ppos);
 
+
+#endif

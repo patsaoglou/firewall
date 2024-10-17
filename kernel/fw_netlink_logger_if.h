@@ -1,3 +1,6 @@
+#ifndef _FW_NETLINK_LOGGER_IF_H
+#define _FW_NETLINK_LOGGER_IF_H
+
 #include <net/sock.h> 
 #include <linux/netlink.h>
 #include <linux/skbuff.h>
@@ -25,4 +28,4 @@ void deinit_fw_netlink_if(fw_netlink_logger_if_st *fw_netlink_if_handle);
 void receive_fw_deamon_pid(struct sk_buff *skb);
 fw_netlink_logger_if_status send_log_entry_netlink(fw_netlink_logger_if_st *fw_netlink_if_handle, char *log_entry, spinlock_t *log_spinlock);
 
-
+#endif

@@ -4,16 +4,14 @@ DEFINE_HASHTABLE(ip_entries, HASHTABLE_BUCKETS);
 
 spinlock_t log_spinlock;
 fw_netfilter_if *fw_netfilter_if_handle_gb;
+fw_netlink_logger_if_st *fw_netlink_if_handle_gb;
 
 fw_netfilter_if_status init_fw_netfilter_if(fw_netfilter_if *fw_netfilter_if_handle, fw_netlink_logger_if_st *fw_netlink_if_handle_p)
 {
     printk(KERN_INFO "%s: Initializing init_fw_netfilter_if...", KBUILD_MODNAME);
     
-    // set global handler pointer so it can be used in the hook callback
+    fw_netlink_if_handle_gb = fw_netlink_if_handle_p;
     fw_netfilter_if_handle_gb = fw_netfilter_if_handle;
-    // fw_netfilter_if_handle->fw_netlink_if_handle = fw_netlink_if_handle_p;
-
-    init_fw_netlink_if(&fw_netfilter_if_handle->netlink_handle);
 
     fw_netfilter_if_handle->fw_netfilter_hook = (struct nf_hook_ops *) kcalloc(1, sizeof(struct nf_hook_ops), GFP_KERNEL);
 
@@ -56,16 +54,14 @@ void deinit_fw_netfilter_if(fw_netfilter_if *fw_netfilter_if_handle){
     
     if (fw_netfilter_if_handle->fw_netfilter_hook != NULL)
     {
-        printk(KERN_INFO "%s: Unregistering netfilter hooks structure", KBUILD_MODNAME);
+        printk(KERN_INFO "%s: Deinit Firewall netfilter", KBUILD_MODNAME);
         
         // unregistering hook callback from netif
         nf_unregister_net_hook(&init_net, fw_netfilter_if_handle->fw_netfilter_hook);
         kfree(fw_netfilter_if_handle->fw_netfilter_hook);
     }
 
-    deinit_fw_netlink_if(&fw_netfilter_if_handle->netlink_handle);
 }
-
 
 unsigned int fw_netfilter_hook_cb(void *priv,struct sk_buff *skb, const struct nf_hook_state *state)
 {
@@ -84,10 +80,8 @@ unsigned int fw_netfilter_hook_cb(void *priv,struct sk_buff *skb, const struct n
         if (lookup_ipv4_entry(ip_header->saddr) == IP_TABLE_ENTRY_FOUND)
         {
             printk(KERN_INFO "%s: Packet from src: %pI4 is blocked. Dropping packet", KBUILD_MODNAME, &ip_header->saddr);
-           
-            //  synchronization of the logbuff is needed: hook_callback is the producer, proc read is the consumer of logbuff
-            //  hook callback happened in an interrupt context so we need irq locking 
-            add_log_enty_to_netlink(fw_netfilter_if_handle_gb, ip_header, &log_spinlock);
+        
+            add_log_enty_to_netlink(fw_netfilter_if_handle_gb, ip_header);
 
             return NF_DROP;
         }
@@ -172,23 +166,22 @@ fw_netfilter_if_ip_table_st remove_ipv4_entry(__be32 ipv4_addr)
     return IP_TABLE_ENTRY_NOT_FOUND;
 }
 
-void add_log_enty_to_netlink(fw_netfilter_if *fw_netfilter_if_handle, struct iphdr *ip_header, spinlock_t *log_spinlock_p)
+void add_log_enty_to_netlink(fw_netfilter_if *fw_netfilter_if_handle, struct iphdr *ip_header)
 {   
     char log_dump[FW_NETFILTER_LOG_BUFF_SIZE]; 
+    
     // got from: https://stackoverflow.com/questions/5077192/how-to-get-current-hour-time-of-day-in-linux-kernel-space
     struct timespec64 curr_tm;
     ktime_get_real_ts64(&curr_tm);
 
 
-    snprintf(log_dump, FW_NETFILTER_LOG_BUFF_SIZE, "%pI4, %s, %.2lu:%.2lu:%.2lu:%.6lu, DROP\n", &ip_header->saddr,
+    snprintf(log_dump, FW_NETFILTER_LOG_BUFF_SIZE, "%pI4, %s, %.2llu:%.2llu:%.2llu:%.6lu, DROP\n", &ip_header->saddr,
                  get_protocal_str(ip_header->protocol),   (curr_tm.tv_sec / 3600) % (24),
                    (curr_tm.tv_sec / 60) % (60),
                    curr_tm.tv_sec % 60,
                    curr_tm.tv_nsec / 1000);
 
-    printk("%s", log_dump);
-
-    send_log_entry_netlink(&fw_netfilter_if_handle->netlink_handle, log_dump, log_spinlock_p);
+    send_log_entry_netlink(fw_netlink_if_handle_gb, log_dump, &log_spinlock);
 
 }
 
@@ -208,8 +201,3 @@ char *get_protocal_str(__u8 protocol)
             return "Unknown";
     }
 }
-
-
-
-// fw_netfilter_if_ip_table_st add_ipv4_entries(__be32 ipv4_addr[]);
-// fw_netfilter_if_ip_table_st remove_ipv4_entries(__be32 ipv4_addr[]);

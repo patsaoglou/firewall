@@ -64,7 +64,7 @@ fw_proc_if_status register_fw_mng(fw_proc_if_st *fw_proc_if_handle)
 // wrapper for fw_proc_if de-initialization
 void deinit_fw_proc_if(fw_proc_if_st *fw_proc_if_handle)
 {
-    printk(KERN_INFO "%s: Deinitializing proc entries", KBUILD_MODNAME);
+    printk(KERN_INFO "%s: Deinit Firewall proc", KBUILD_MODNAME);
 
     handle_fw_proc_if_fail(fw_proc_if_handle);
 }

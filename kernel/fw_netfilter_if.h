@@ -1,3 +1,6 @@
+#ifndef _FW_NETFILTER_IF_H
+#define _FW_NETFILTER_IF_H
+
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
 #include <linux/ip.h>
@@ -20,12 +23,7 @@ typedef struct
 
 typedef struct 
 {
-    // this buff is used by fw_proc_if to dump to /proc/my_fw/logv
-    char log_dump[FW_NETFILTER_LOG_BUFF_SIZE];
-    
     struct nf_hook_ops *fw_netfilter_hook;
-    fw_netlink_logger_if_st *fw_netlink_if_handle;
-    fw_netlink_logger_if_st netlink_handle;
 }fw_netfilter_if;
 
 typedef enum
@@ -56,11 +54,7 @@ fw_netfilter_if_ip_table_st lookup_ipv4_entry(__be32 ipv4_addr);
 fw_netfilter_if_ip_table_st add_ipv4_entry(__be32 ipv4_addr);
 fw_netfilter_if_ip_table_st remove_ipv4_entry(__be32 ipv4_addr);
 
-void add_log_enty_to_netlink(fw_netfilter_if *fw_netfilter_if_handle, struct iphdr *ip_header, spinlock_t *log_spinlock);
+void add_log_enty_to_netlink(fw_netfilter_if *fw_netfilter_if_handle, struct iphdr *ip_header);
 char *get_protocal_str(__u8 protocol);
 
-// fw_netfilter_if_ip_table_st add_ipv4_entries(__be32 ipv4_addr[]);
-// fw_netfilter_if_ip_table_st remove_ipv4_entries(__be32 ipv4_addr[]);
-
-
-
+#endif

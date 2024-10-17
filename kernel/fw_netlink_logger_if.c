@@ -1,16 +1,16 @@
 #include "fw_netlink_logger_if.h"
 
 // global pointer to netlink handle so it can be seen by the callback
-fw_netlink_logger_if_st *fw_netlink_if_handle_gb;
+static fw_netlink_logger_if_st *fw_netlink_if_handle_gb;
 
 fw_netlink_logger_if_status init_fw_netlink_if(fw_netlink_logger_if_st *fw_netlink_if_handle)
 {
- 
-    fw_netlink_if_handle_gb = fw_netlink_if_handle;
 
      struct netlink_kernel_cfg cfg = {
         .input = receive_fw_deamon_pid,
     };
+
+    fw_netlink_if_handle_gb = fw_netlink_if_handle;
 
     fw_netlink_if_handle->log_netlink = netlink_kernel_create(&init_net, FW_LOG_NETLINK, &cfg);
 
@@ -30,11 +30,10 @@ fw_netlink_logger_if_status init_fw_netlink_if(fw_netlink_logger_if_st *fw_netli
 
 void deinit_fw_netlink_if(fw_netlink_logger_if_st *fw_netlink_if_handle)
 {
-    printk(KERN_INFO "%s: Deinitializing firewall log netlink", KBUILD_MODNAME);
-
-
     if (fw_netlink_if_handle->log_netlink != NULL)
     {
+        printk(KERN_INFO "%s: Deinit Firewall netlink", KBUILD_MODNAME);
+
         netlink_kernel_release(fw_netlink_if_handle->log_netlink);
     }
 }
@@ -61,7 +60,7 @@ void receive_fw_deamon_pid(struct sk_buff *skb)
 
 fw_netlink_logger_if_status send_log_entry_netlink(fw_netlink_logger_if_st *fw_netlink_if_handle, char *log_entry, spinlock_t *log_spinlock)
 {
-    long flags;
+    unsigned long flags;
     struct sk_buff *payload_log_entry;
     struct nlmsghdr *netlink_entry;
     int log_entry_size;
@@ -89,7 +88,6 @@ fw_netlink_logger_if_status send_log_entry_netlink(fw_netlink_logger_if_st *fw_n
     strncpy(nlmsg_data(netlink_entry), log_entry, log_entry_size);
 
     // deep locking when netlink queue is modified
-
     spin_lock_irqsave(log_spinlock, flags);
 
     netlink_entry_status = nlmsg_unicast(fw_netlink_if_handle_gb->log_netlink, payload_log_entry, fw_netlink_if_handle_gb->fw_deamon_pid);     

@@ -4,7 +4,7 @@
 - Plans to continue working on it.
 
 # Initial system design
-![376097699-c16fdda7-16b7-4abd-9528-7ba243354fcf drawio (1)](https://github.com/user-attachments/assets/186b7dce-a794-459f-970b-18e2f2e38775)
+![alt text](<376097699-c16fdda7-16b7-4abd-9528-7ba243354fcf.drawio (1).jpg>)
 
 # Resources
 - Kernel Programming Book by Kaiwan N Billimoria

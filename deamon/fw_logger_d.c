@@ -2,17 +2,17 @@
 
 int init_fw_logger_d(fw_logger_d_st *handle)
 {
-    memset(handle->log_buff, 0, LOG_BUFF_SIZE);
-
+    // this is going to be called from fw_main_d with thread create
     init_log_file(handle);
-    init_log_proc_file(handle);
-    return 0;
+    init_fw_netlink_logger(handle);
+    
+    poll_logger(handle);
 }
 
 int deinit_fw_logger_d(fw_logger_d_st *handle)
 {
     deinit_log_file(handle);
-    deinit_log_proc_file(handle);
+    deinit_fw_netlink_logger(handle);
 }
 
 int init_log_file(fw_logger_d_st *handle)
@@ -61,60 +61,72 @@ int deinit_log_file(fw_logger_d_st *handle)
 }
 
 
-int write_log_file(fw_logger_d_st *handle)
+int write_log_file(fw_logger_d_st *handle, char *log_entry)
 {   
-    fprintf(handle->log_file, "%s",handle->log_buff);
+    fprintf(handle->log_file, "%s", log_entry);
     fflush(handle->log_file);
     
-    memset(handle->log_buff, 0, LOG_BUFF_SIZE);
 
     return 0;
 }
-
-int init_log_proc_file(fw_logger_d_st *handle)
+// Example used: https://github.com/mwarning/netlink-examples/blob/master/unicast_example/nl_recv.c
+int init_fw_netlink_logger(fw_logger_d_st *handle)
 {   
-    handle->log_proc = open(PROC_PATH, O_RDONLY);
+    struct sockaddr_nl fw_user_logger_addr;
+    struct nlmsghdr *netlink_message;
+    struct msghdr message;
+    struct iovec io;
+
+    handle->log_netlink_fd = socket(PF_NETLINK, SOCK_RAW, FW_LOG_NETLINK);
+
+    memset(&fw_user_logger_addr, 0, sizeof(fw_user_logger_addr));
+    fw_user_logger_addr.nl_family = AF_NETLINK;
+    fw_user_logger_addr.nl_pid = getpid();
+    fw_user_logger_addr.nl_groups = 0;
+    bind(handle->log_netlink_fd, (struct sockaddr*)&fw_user_logger_addr, sizeof(fw_user_logger_addr));
+
+    netlink_message = (struct nlmsghdr *)malloc(NLMSG_SPACE(LOG_PAYLOAD));
+
+    memset(netlink_message, 0, NLMSG_SPACE(LOG_PAYLOAD));
+
+    netlink_message->nlmsg_len = NLMSG_SPACE(LOG_PAYLOAD);
+    netlink_message->nlmsg_pid = getpid();
+    netlink_message->nlmsg_flags = 0;
+    netlink_message->nlmsg_type = 0;
+
+    memset(&io, 0, sizeof(io));
+    io.iov_base = (void *)netlink_message;
+    io.iov_len = NLMSG_SPACE(LOG_PAYLOAD);
     
-    if (handle->log_proc < 0)
-    {   
-        printf("Failed to open /proc/my_fw/log. Exit...");
-        return -1;
+    memset(&message, 0, sizeof(message));
+    message.msg_iov = &io;
+    message.msg_iovlen = 1;
+
+    // send dummy message for the kernel module to get pid of deamon
+    sendmsg(handle->log_netlink_fd, &message, 0);
+    
+    // add sleep until event
+    while (1)
+    {
+        recvmsg(handle->log_netlink_fd, &message, 0);
+        write_log_file(handle, (char *)NLMSG_DATA(netlink_message));
     }
+
 
 }
 
-int deinit_log_proc_file(fw_logger_d_st *handle)
+int deinit_fw_netlink_logger(fw_logger_d_st *handle)
 {
-    if (handle->log_proc > 0)
-    {
-        close(handle->log_proc);
-    }
-
-    return 0;
+    return 1;
 }
 
-void check_if_log_proc_has_log_entry(fw_logger_d_st *handle)
-{
-    size_t bytes_read;
-    bytes_read = read(handle->log_proc, handle->log_buff, sizeof(handle->log_buff) - 1);
-    printf("bytes_read: %ld\n", bytes_read);
-    if (bytes_read < 0)
-    {
-        printf("Error reading proc. Exit");
-        exit(0);
-    }
-    else if (bytes_read > 0)
-    {
-        write_log_file(handle);
-    }
-}
+
 
 void poll_logger(fw_logger_d_st *handle)
 {
     while(1)
     {      
-        check_if_log_proc_has_log_entry(handle);
-        sleep(1);
+
     }
 }
 
@@ -123,5 +135,5 @@ int main(void)
     fw_logger_d_st handle;
     
     init_fw_logger_d(&handle);
-    poll_logger(&handle);
+
 }
