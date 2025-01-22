@@ -92,7 +92,7 @@ ssize_t mng_write_cb(struct file *file, const char __user *ubuf, size_t count, l
 
     memset(test_buff, 0 , 32);
 
-
+    //  this proc write is just for proc enty testing purposes. buffer overflow is possible which is bad
     if (copy_from_user(test_buff, ubuf, count))
     {
         printk(KERN_INFO "%s: mng_read_cb was envoked and failed", KBUILD_MODNAME);
